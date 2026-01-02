@@ -1,8 +1,7 @@
 {
   "manifest_version": 3,
-
-  "name": "Chrome Extension TypeScript Starter",
-  "description": "Chrome Extension, TypeScript, Visual Studio Code",
+  "name": "OLa",
+  "description": "Chrome Extension for Shop Express tools",
   "version": "1.0",
 
   "options_ui": {

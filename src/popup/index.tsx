@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Order } from "./types/order";
-import { TabMessageEvent } from './common/tab-message';
-import { TabsService } from './services/tabs-service'
+import { Order } from "../types/order";
+import { TabMessageEvent } from '../common/tab-message';
+import { TabsService } from '../services/tabs-service'
 import browser from 'webextension-polyfill';
 
 const Popup = () => {

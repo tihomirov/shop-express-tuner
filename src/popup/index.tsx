@@ -46,28 +46,42 @@ const Popup = () => {
       <br />
       {order && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <span>{order.id}</span>
-          <span>Client name: {order.client.name}</span>
-          <span>Client email: {order.client.email}</span>
-          <span>Client phone: {order.client.phone}</span>
-          <span>Delivery payment method: {order.delivery.paymentMethod}</span>
-          <span>Delivery payment status: {order.delivery.paymentStatus}</span>
-          <span>Delivery type: {order.delivery.type}</span>
-          <span>Delivery address: {order.delivery.address}</span>
-          <span>Delivery email: {order.delivery.email}</span>
-          <span>Delivery phone: {order.delivery.phone}</span>
-          <span>Delivery name: {order.delivery.name}</span>
-          <span>Delivery ttn: {order.delivery.ttn}</span>
-          <ul>
-            {order.items.map((item, index) => (
-              <div key={index}>
-                <span>Item name: {item.name}</span>
-                <span>Item params: {item.params}</span>
-                <span>Item quantity: {item.quantity}</span>
-                <span>Item price: {item.price}</span>
-              </div>
-            ))}
-          </ul>
+          <div>
+						<h3>{order.id}</h3>
+						<div>
+								<h5>Client</h5>
+									<div>{order.client.name}</div>
+									<div>{order.client.email}</div>
+									<div>{order.client.phone}</div>
+						</div>
+
+						<div>
+								<h5>Delivery Info</h5>
+									<div>Payment method: {order.delivery.paymentMethod}</div>
+									<div>Payment status: {order.delivery.paymentStatus}</div>
+									<div>Type: {order.delivery.type}</div>
+									<div>Address: {order.delivery.address}</div>
+									<div>Email: {order.delivery.email}</div>
+									<div>Phone: {order.delivery.phone}</div>
+									<div>Name: {order.delivery.name}</div>
+									<div>TTN: {order.delivery.ttn}</div>
+						</div>
+					
+						<div>
+              {order.items.map((item, index) => (
+								<ul key={index} style={{paddingBottom: '24px'}}>
+									<div>{item.name}</div>
+									<div>Params: {item.params}</div>
+									<div>Quantity: {item.quantity}</div>
+									<div>Price: {item.price}</div>
+									<div>Actual Price: {item.actualPrice}</div>
+									<div>Total Price: {item.totalPrice}</div>
+								</ul>
+              ))}
+						</div>
+
+						<h3>Total Price: {order.totalPrice}</h3>
+		      </div>
           <span>Click on tab to open Order Form</span>
           {allTabs && (<div style={{ display: 'flex', flexWrap: 'wrap' }}>
             {allTabs.map((tab, index) => (

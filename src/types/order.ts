@@ -7,4 +7,5 @@ export type Order = Readonly<{
   client: Client;
   delivery: Delivery;
   items: Item[];
+  totalPrice: number;
 }>;

@@ -43,16 +43,35 @@ export class ParseOrderEvent extends MessageEvent<ParseOrder, TabMessageResponse
       const itemsElements = mainOrderFormElement.querySelectorAll('tr[ng-repeat="product in Model.Products track by $index"]')
 
       return [...itemsElements].map(element => {
-        const item = [...element.querySelectorAll<HTMLElement>('b, span, p')].map(a => a.innerText);
-        const quantity = element.querySelector('input')?.value!;
+        const [_imageUrl, nameWithParams, allPrices, quantity, totalPrice] = [...element.children].map(el => el.textContent.replace(/(\r\n|\n|\r)/gm, '').trim() || el.querySelector('input')?.value);
+        const [name, params] = nameWithParams?.split(/\s{2,}/) ?? [];
+        const prices = allPrices?.split('₴').map(val => val.trim().replace(',', '.')).filter(val => val) ?? [];
+        const hasDiscount = prices.length > 1;
 
         return {
-          name: item[1],
-          params: item[2],
-          price: item[6],
-          quantity: parseInt(quantity),
+          name,
+          quantity: quantity,
+          totalPrice: totalPrice?.trim().replace(',', '.'),
+          params,
+          price: prices[0],
+          actualPrice: hasDiscount ? prices[1] : prices[0],
         }
       });
+    }
+
+    const getTotalPrice = (): number => {
+      const regex = /^Всього:\d+,\d{2}₴$/;
+
+      const element = [...document.querySelectorAll("*")].find(el => {
+        const normalizedText = el.textContent
+          .replace(/\s+/g, ""); // remove spaces + newlines
+
+        return regex.test(normalizedText);
+      });
+
+      const priceString = element?.children[2].textContent.replace(',', '.'); // 100,50 -> 100.50(to make parseFloat works)
+
+      return parseFloat(priceString ?? '0')
     }
 
     return {
@@ -60,6 +79,7 @@ export class ParseOrderEvent extends MessageEvent<ParseOrder, TabMessageResponse
       client: getClient(),
       delivery: getDelivery(),
       items: getItems(),
+      totalPrice: getTotalPrice(),
     }
   }
 }

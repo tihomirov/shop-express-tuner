@@ -45,14 +45,14 @@ export class ParseOrderEvent extends MessageEvent<ParseOrder, TabMessageResponse
       return [...itemsElements].map(element => {
         const [_imageUrl, nameWithParams, allPrices, quantity, totalPrice] = [...element.children].map(el => el.textContent.replace(/(\r\n|\n|\r)/gm, '').trim() || el.querySelector('input')?.value);
         const [name, params] = nameWithParams?.split(/\s{2,}/) ?? [];
-        const prices = allPrices?.split('₴').map(val => val.trim().replace(',', '.')).filter(val => val) ?? [];
+        const prices = allPrices?.split('₴').map(val => parseFloat(val.trim().replace(',', '.'))).filter(val => val) ?? [];
         const hasDiscount = prices.length > 1;
 
         return {
           name,
-          quantity: quantity,
-          totalPrice: totalPrice?.trim().replace(',', '.'),
           params,
+          quantity: quantity ? parseInt(quantity) : undefined,
+          totalPrice: totalPrice ? parseFloat(totalPrice?.trim().replace(',', '.')) : undefined,
           price: prices[0],
           actualPrice: hasDiscount ? prices[1] : prices[0],
         }

@@ -4,7 +4,7 @@ import browser from 'webextension-polyfill';
 import { Order } from "../types/order";
 import { TabMessageEvent } from '../common/tab-message';
 import { TabsService } from '../services/tabs-service'
-import { OrderForm } from './components/orderForm'
+import { OrderForm } from './components/order-form'
 
 const Popup = () => {
   const [order, setOrder] = useState<Order | undefined>();

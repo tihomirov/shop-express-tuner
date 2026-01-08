@@ -1,9 +1,5 @@
-import React, { useEffect, useState, FC } from "react";
-import { createRoot } from "react-dom/client";
+import React, { FC } from "react";
 import { Order } from "../../../types/order";
-import { TabMessageEvent } from '../../../common/tab-message';
-import { TabsService } from '../../../services/tabs-service'
-import browser from 'webextension-polyfill';
 
 export const OrderForm: FC<{ order: Order }> = ({ order }) => {
   return (

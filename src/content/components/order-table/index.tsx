@@ -8,6 +8,14 @@ const tdCommonStyle: React.CSSProperties = {
   textAlign: 'center',
 };
 
+const tableStyle: React.CSSProperties = {
+  tableLayout: 'fixed',
+  fontSize: '10pt',
+  fontFamily: 'Arial',
+  borderCollapse: 'collapse',
+  border: 'none'
+};
+
 const paymentTypeMap = {
   'Накладений платіж': 'Накладений',
   'Оплата картами': 'Сайт',
@@ -18,14 +26,27 @@ const itemNameMap: Record<string, string> = {
   'Комбінезон': 'Комбінезон'
 }
 
-export const OrderTable: FC<{ order: Order }> = ({ order }) => {
+type OrderTableProps = {
+  order: Order,
+}
+
+export const OrderTable: FC<OrderTableProps> = ({ order }) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
-  const copyValue = useCallback((value: string | number) => {
-    navigator.clipboard.writeText(value.toString());
+  const todayString = useMemo(() => {
+    const date = new Date(); // e.g., Sat Jan 10 2026
+
+    const year = date.getFullYear();
+    // getMonth() is zero-indexed, so add 1 and use padStart for 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${day}.${month}.${year}`;
   }, []);
 
-  const todayString = useMemo(() => (new Date()).toLocaleDateString(), []);
+  const phoneFormatted = useMemo(() => {
+    return order.delivery.phone?.replace(/^\+38/, "").replace(/^38/, "");
+  }, [order]);
 
   const paymentTypeString = useMemo(() => {
     for (const [key, value] of Object.entries(paymentTypeMap)) {
@@ -55,6 +76,16 @@ export const OrderTable: FC<{ order: Order }> = ({ order }) => {
     return ''
   }, []);
 
+  const receivePayment = useMemo(() => {
+    if (paymentTypeString === paymentTypeMap['Оплата картами']) {
+      const sumWithCommision = order.totalPrice - (order.totalPrice * 0.013);
+
+      return Number.isInteger(sumWithCommision) ? sumWithCommision : sumWithCommision.toFixed(2)
+    } else {
+      return '';
+    }
+  }, [order]);
+
   const copyTable = useCallback(async () => {
     try {
       if (!tableRef.current) {
@@ -81,24 +112,11 @@ export const OrderTable: FC<{ order: Order }> = ({ order }) => {
     }
   }, []);
 
-  const readTable = useCallback(async () => {
-    try {
-      const clipText = await navigator.clipboard.read();
-
-      for (const item of clipText) {
-        if (item.types.includes('text/html')) {
-          const blob = await item.getType('text/html');
-          const htmlText = await blob.text();
-          console.log('Clipboard HTML content:', htmlText);
-          return htmlText;
-        }
-      }
-      // You can then use the text as needed in your application
-      // e.g., document.getElementById("output").innerText = clipText;
-    } catch (err) {
-      console.error("Failed to read clipboard contents: ", err);
-      // This often happens if the user denies permission or the page is not in focus
+  const copyValue = useCallback((value: string | number | undefined) => {
+    if (!value) {
+      return
     }
+    navigator.clipboard.writeText(value.toString());
   }, []);
 
   const items = useMemo(() => {
@@ -110,8 +128,7 @@ export const OrderTable: FC<{ order: Order }> = ({ order }) => {
   return (
     <>
       <button style={{ cursor: 'pointer', margin: '0 4px 4px 0' }} onClick={copyTable}>Copy</button>
-      <button style={{ cursor: 'pointer' }} onClick={readTable}>Read</button>
-      <table ref={tableRef} border={1} data-sheets-root="1" data-sheets-baot="1" style={{ tableLayout: 'fixed', fontSize: '10pt', fontFamily: 'Arial', borderCollapse: 'collapse', border: 'none' }}>
+      <table ref={tableRef} border={1} data-sheets-root="1" data-sheets-baot="1" style={tableStyle}>
         <tbody>
           {items.map((item, index) => (
             <tr key={index}>
@@ -120,27 +137,29 @@ export const OrderTable: FC<{ order: Order }> = ({ order }) => {
                   <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
                     {order.delivery.name}
                   </td>
-                  <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
+                  <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.ttn)} style={tdCommonStyle}>
                     {order.delivery.ttn}
                   </td>
                   <td rowSpan={itemsLength} onClick={() => copyValue(todayString)} style={tdCommonStyle}>
                     {todayString}
                   </td>
-                  <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
+                  <td rowSpan={itemsLength} onClick={() => copyValue(paymentTypeString)} style={tdCommonStyle}>
                     {paymentTypeString}
                   </td>
-                  <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
+                  <td rowSpan={itemsLength} onClick={() => copyValue('Сайт')} style={tdCommonStyle}>
                     Сайт
                   </td>
                 </>
               )}
-              <td onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
+              <td onClick={() => copyValue(item.actualPrice)} style={tdCommonStyle}>
                 {item.actualPrice}
               </td>
 
-              {index === 0 && (<td rowSpan={itemsLength} style={tdCommonStyle}></td>)}
+              {index === 0 && (<td rowSpan={itemsLength} onClick={() => copyValue(item.actualPrice)} style={tdCommonStyle}>
+                {receivePayment}
+              </td>)}
 
-              <td onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
+              <td onClick={() => copyValue(getDiscountString(item))} style={tdCommonStyle}>
                 {getDiscountString(item)}
               </td>
 
@@ -148,24 +167,24 @@ export const OrderTable: FC<{ order: Order }> = ({ order }) => {
                 <>
                   <td rowSpan={itemsLength} style={tdCommonStyle}></td>
                   <td rowSpan={itemsLength} style={tdCommonStyle}></td>
-                  <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
-                    {order.delivery.phone?.replace(/^\+38/, "").replace(/^38/, "")}
+                  <td rowSpan={itemsLength} onClick={() => copyValue(phoneFormatted)} style={tdCommonStyle}>
+                    {phoneFormatted}
                   </td>
-                  <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
+                  <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.email)} style={tdCommonStyle}>
                     {order.delivery.email}
                   </td>
-                  <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
+                  <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.address?.split(',')[1])} style={tdCommonStyle}>
                     {order.delivery.address?.split(',')[1]}
                   </td>
                 </>
               )}
-              <td onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
+              <td onClick={() => copyValue(getItemNameString(item))} style={tdCommonStyle}>
                 {getItemNameString(item)}
               </td>
-              <td onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
+              <td onClick={() => copyValue(getColorString(item))} style={tdCommonStyle}>
                 {getColorString(item)}
               </td>
-              <td onClick={() => copyValue(order.delivery.name)} style={tdCommonStyle}>
+              <td onClick={() => copyValue(getSizeString(item))} style={tdCommonStyle}>
                 {getSizeString(item)}
               </td>
 

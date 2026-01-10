@@ -1,10 +1,10 @@
 import browser from 'webextension-polyfill';
-import React, { FC, useCallback, useEffect, useState } from "react";
+import React, { FC, useCallback, useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { TabMessageEvent } from '../common/tab-message';
 import { Order } from '../types/order';
 import { parseOrder } from './events';
-import { OrderTable } from './components/order-table';
+import { OrderItem } from './components/order-item';
 
 const App: FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -40,27 +40,9 @@ const App: FC = () => {
 
   return (
     <>
-      {orders.map((order, indexx) => (
-        <div key={order.id} style={{
-          position: 'fixed',
-          width: '600px',
-          zIndex: `${99999 + indexx}`,
-          right: '4px',
-          top: '4px',
-          backgroundColor: 'lightyellow',
-          borderRadius: '6px',
-          padding: '28px 6px 6px',
-          overflowY: 'scroll',
-          boxShadow: '3px 3px 7px 0px rgba(0,0,0,0.7)',
-        }}>
-          <button onClick={() => closeOrder(order.id)} style={{ position: 'absolute', top: '4px', left: '4px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="12" height="12" viewBox="0 0 50 50">
-              <path d="M 7.71875 6.28125 L 6.28125 7.71875 L 23.5625 25 L 6.28125 42.28125 L 7.71875 43.71875 L 25 26.4375 L 42.28125 43.71875 L 43.71875 42.28125 L 26.4375 25 L 43.71875 7.71875 L 42.28125 6.28125 L 25 23.5625 Z"></path>
-            </svg>
-          </button>
-          <OrderTable order={order} />
-        </div>
-      ))}
+      {orders.map((order, index) =>
+        <OrderItem order={order} index={index} onClose={() => closeOrder(order.id)} />
+      )}
     </>
   );
 };

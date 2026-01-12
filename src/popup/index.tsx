@@ -5,6 +5,7 @@ import { Order } from "../types/order";
 import { TabMessageEvent } from '../common/tab-message';
 import { TabsService } from '../services/tabs-service'
 import { OrderForm } from './components/order-form'
+import { MessageForm } from './components/message-form'
 
 const Popup = () => {
   const [order, setOrder] = useState<Order | undefined>();
@@ -68,6 +69,7 @@ const Popup = () => {
         </div>
       </div>
       )}
+      {order && <MessageForm order={order} />}
     </div>
   );
 };

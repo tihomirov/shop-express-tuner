@@ -12,6 +12,11 @@ export const MessageForm: FC<{ order: Order }> = ({ order }) => {
     window.open(`https://t.me/${order.delivery.phone}?text=${encodeURIComponent(message)}&profile`);
   }, [onCopy, message]);
 
+  const onCopyAndOpenViber = useCallback(async () => {
+    await onCopy();
+    window.open(`viber://chat?number=${order.delivery.phone}&text=${encodeURIComponent(message)}`);
+  }, [onCopy, message]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <label htmlFor="myTextarea">Your Message:</label>
@@ -25,6 +30,7 @@ export const MessageForm: FC<{ order: Order }> = ({ order }) => {
       <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
         <button onClick={onCopy}>Copy</button>
         <button onClick={onCopyAndOpenTelegram}>Copy & Open Telegram</button>
+        <button onClick={onCopyAndOpenViber}>Copy & Open Viber</button>
       </div>
     </div>
   );

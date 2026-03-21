@@ -21,9 +21,24 @@ const paymentTypeMap = {
   'Оплата картами': 'Сайт',
 }
 
-const itemNameMap: Record<string, string> = {
-  'Шовковиста нічна сорочка зі шнурівкою': 'ПСЧ',
-  'Комбінезон': 'Комбінезон'
+const itemNameMap = (name: string) => {
+  if (name === 'Шовковиста нічна сорочка зі шнурівкою') {
+    return 'ПСЧ';
+  }
+
+  if (name === 'Довга сукня з мереживними вставками') {
+    return 'СукМаксі';
+  }
+
+  if (name === 'Комбінезон') {
+    return 'Комбінезон';
+  }
+
+  if (name.startsWith('Лонгслів')) {
+    return 'Лонгслів'
+  }
+
+  return '';
 }
 
 type OrderTableProps = {
@@ -65,7 +80,7 @@ export const OrderTable: FC<OrderTableProps> = ({ order }) => {
   }, []);
 
   const getItemNameString = useCallback((item: Item) => {
-    return item.name ? itemNameMap[item.name] : '';
+    return item.name ? itemNameMap(item.name) : '';
   }, []);
 
   const getDiscountString = useCallback((item: Item) => {

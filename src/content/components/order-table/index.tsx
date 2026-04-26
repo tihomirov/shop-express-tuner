@@ -6,6 +6,12 @@ const tdCommonStyle: React.CSSProperties = {
   border: '1px solid rgb(0, 0, 0)',
   verticalAlign: 'middle',
   textAlign: 'center',
+  borderWidth: '1px',
+  borderStyle: 'solid',
+  borderColor: 'rgb(0, 0, 0) rgb(0, 0, 0) rgb(0, 0, 0) rgb(204, 204, 204)',
+  borderImage: 'initial',
+  overflow: 'hidden',
+  padding: '2px 3px',
 };
 
 const tableStyle: React.CSSProperties = {

@@ -41,7 +41,7 @@ const App: FC = () => {
   return (
     <>
       {orders.map((order, index) =>
-        <OrderItem order={order} index={index} onClose={() => closeOrder(order.id)} />
+        <OrderItem key={index} order={order} index={index} onClose={() => closeOrder(order.id)} />
       )}
     </>
   );

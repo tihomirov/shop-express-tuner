@@ -10,7 +10,7 @@ export const OrderForm: FC<{ order: Order }> = ({ order }) => {
       </div>
       <div style={{ display: "flex", flexDirection: 'row', gap: "8px" }}>
         <div>
-          <h5>Client</h5>
+          <h5>Client TTTTT</h5>
           <div>{order.client.name}</div>
           <div>{order.client.email}</div>
           <div>{order.client.phone}</div>

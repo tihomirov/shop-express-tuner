@@ -5,7 +5,8 @@
   "version": "1.0.5",
 
   "options_ui": {
-    "page": "options.html"
+    "page": "options.html",
+    "open_in_tab": true
   },
 
   "action": {

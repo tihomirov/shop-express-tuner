@@ -6,9 +6,11 @@ import { TabMessageEvent } from '../common/tab-message';
 import { TabsService } from '../services/tabs-service'
 import { OrderForm } from './components/order-form'
 import { MessageForm } from './components/message-form'
+import { Settings, SettingsService } from '../services/settings-service'
 
 const Popup = () => {
   const [order, setOrder] = useState<Order | undefined>();
+  const [settings, setSettings] = useState<Settings | undefined>();
   const [allTabs, setAllTabs] = useState<browser.Tabs.Tab[] | undefined>();
   const [switchToTab, setSwitchToTab] = useState(true);
 
@@ -27,6 +29,7 @@ const Popup = () => {
 
     fetchAllTabs();
     parseOrder();
+    SettingsService.get().then(setSettings);
   }, [])
 
 
@@ -47,6 +50,9 @@ const Popup = () => {
 
   return (
     <div style={{ width: '600px', fontSize: '12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button title="Settings" onClick={() => browser.runtime.openOptionsPage()}>⚙️ Settings</button>
+      </div>
       {order && <OrderForm order={order} />}
       {allTabs && (<div style={{ display: 'flex', flexWrap: 'wrap' }}>
         {allTabs.map((tab, index) => (
@@ -69,7 +75,7 @@ const Popup = () => {
         </div>
       </div>
       )}
-      {order && <MessageForm order={order} />}
+      {order && settings && <MessageForm order={order} template={settings.message.template} />}
     </div>
   );
 };

@@ -1,8 +1,14 @@
 import React, { FC, useCallback, useState } from "react";
 import { Order } from "../../../types/order";
+import { renderMessageTemplate } from "../../../common/message-template";
 
-export const MessageForm: FC<{ order: Order }> = ({ order }) => {
-  const [message, setMessage] = useState(`${order.delivery.name.split(' ')[1]}, ваше замовлення укомплектоване та готове до відправки, номер ТТН ${order.delivery.ttn}💌\n\nP/S Обережно! Бажання, загадані у цьому одязі, здійснюються💫`)
+type MessageFormProps = {
+  order: Order;
+  template: string;
+};
+
+export const MessageForm: FC<MessageFormProps> = ({ order, template }) => {
+  const [message, setMessage] = useState(() => renderMessageTemplate(template, order));
   const onCopy = useCallback(async () => {
     await navigator.clipboard.writeText(message);
   }, [message]);

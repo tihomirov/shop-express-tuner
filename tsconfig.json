@@ -12,8 +12,6 @@
         "jsx": "react",
         "typeRoots": [
             "node_modules/@types"
-        ],
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
+        ]
     }
 }

@@ -1,70 +1,45 @@
-# Chrome Extension TypeScript Starter
+# OLa: Shop Express tuner
 
-![build](https://github.com/chibat/chrome-extension-typescript-starter/workflows/build/badge.svg)
+Chrome extension with tools for processing Shop Express orders:
 
-Chrome Extension, TypeScript and Visual Studio Code
+- **Popup** reads the order from the open Shop Express order page and shows it. It can send the order
+  to any other tab as a floating window with a table ready to paste into a spreadsheet.
+- **Customer message** is generated from a template and can be copied or opened in Telegram / Viber.
+- **Options page** lets you edit the message template; placeholders like `{firstName}` or `{ttn}` are
+  filled from the order.
 
-## Prerequisites
+## Development
 
-* [node + npm](https://nodejs.org/) (Current Version)
+Requires Node 24 (see `.nvmrc`).
 
-## Option
-
-* [Visual Studio Code](https://code.visualstudio.com/)
-
-## Includes the following
-
-* TypeScript
-* Webpack
-* React
-* Jest
-* Example Code
-    * Chrome Storage
-    * Options Version 2
-    * content script
-    * count up badge number
-    * background
-
-## Project Structure
-
-* src/typescript: TypeScript source files
-* src/assets: static files
-* dist: Chrome Extension directory
-* dist/js: Generated JavaScript files
-
-## Setup
-
-```
+```bash
 npm install
+npm run watch   # rebuild on change
+npm run build   # production build
+npm test
 ```
 
-## Import as Visual Studio Code project
+Load the `dist` directory in Chrome via `chrome://extensions` → "Load unpacked".
 
-...
+## Tests
 
-## Build
+`src/__tests__/parse-order.ts` parses each saved order page in `src/__tests__/fixtures/orders/*.html`
+and compares the result with the `.expected.json` file of the same name.
 
-```
-npm run build
-```
+To add a case, open an order page and run this in the DevTools console, then paste the clipboard into a new `.html` fixture:
 
-## Build in watch mode
-
-### terminal
-
-```
-npm run watch
+```js
+document.querySelectorAll('input').forEach(i => i.setAttribute('value', i.value));
+const html = document.documentElement.cloneNode(true);
+html.querySelectorAll('script, style, link, noscript, iframe').forEach(e => e.remove());
+copy('<!doctype html>\n' + html.outerHTML);
 ```
 
-### Visual Studio Code
+**Replace all customer data** (names, phones, emails, addresses, TTNs) with fake values in the same
+format before committing. Then write the `.expected.json` from what the page shows.
 
-Run watch mode.
+## Release
 
-type `Ctrl + Shift + B`
-
-## Load extension to chrome
-
-Load `dist` directory
-
-## Test
-`npx jest` or `npm run test`
+Run the **Release** workflow on GitHub (Actions → Release → Run workflow) and pick the version bump.
+It runs the tests, bumps the version in `package.json` and `manifest.json`, tags the commit and attaches
+the zipped extension to a GitHub release.

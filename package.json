@@ -1,8 +1,7 @@
 {
-  "name": "chrome-extension-typescript-starter",
+  "name": "ola-shop-express-tuner",
   "version": "1.0.6",
-  "description": "chrome-extension-typescript-starter",
-  "main": "index.js",
+  "description": "OLa: Chrome extension with tools for Shop Express orders",
   "scripts": {
     "watch": "webpack --config webpack/webpack.dev.js --watch",
     "build": "webpack --config webpack/webpack.prod.js",
@@ -10,11 +9,11 @@
     "test": "npx jest",
     "style": "prettier --write \"src/**/*.{ts,tsx}\""
   },
-  "author": "",
+  "author": "tihomirov",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chibat/chrome-extension-typescript-starter.git"
+    "url": "https://github.com/tihomirov/shop-express-tuner.git"
   },
   "dependencies": {
     "react": "^19.3.0",

@@ -3,9 +3,9 @@ import { Delivery } from './delivery';
 import { Item } from './item';
 
 export type Order = Readonly<{
-  id: string;
+  id?: string;
   client: Client;
   delivery: Delivery;
-  items: Item[];
-  totalPrice: number;
+  items: ReadonlyArray<Item>;
+  totalPrice?: number;
 }>;

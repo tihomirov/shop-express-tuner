@@ -3,6 +3,6 @@ export type Item = Readonly<{
   params?: string;
   quantity?: number;
   price?: number; // price without discount
-  actualPrice?: number; // price with discount, if no discount price is the same with actualPrice
-  totalPrice?: number; // quantoty with price with discount 
+  actualPrice?: number; // price with discount, equals price when there is no discount
+  totalPrice?: number; // quantity * actualPrice
 }>;

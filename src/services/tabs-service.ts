@@ -1,7 +1,7 @@
 import { assertExists } from '../utils/assert';
 import browser from 'webextension-polyfill';
 
-import { TabMessage, TabMessageEvent, TabMessageResponse } from '../common/tab-message';
+import { TabMessage, TabMessageResponse } from '../common/tab-message';
 
 export type BrowserTab = browser.Tabs.Tab;
 
@@ -12,27 +12,27 @@ export class TabsService {
     return tab;
   }
 
-  static async sendMessageToCurrentTab<T extends TabMessageEvent>(
-    message: TabMessage,
-  ): Promise<TabMessageResponse[T]> {
+  static async sendMessageToCurrentTab<M extends TabMessage>(message: M): Promise<TabMessageResponse[M['event']]> {
     const { id } = await TabsService.getCurrentTab();
     assertExists(id, 'currentTab id must be defined to send message');
 
     return await TabsService.sendMessageToTab(id, message);
   }
 
-  static async sendMessageToTab<T extends TabMessageEvent>(
-    tabId: number,
-    message: TabMessage,
-  ): Promise<TabMessageResponse[T]> {
-    return await browser.tabs.sendMessage(tabId, message);
+  static async sendMessageToTab<M extends TabMessage>(tabId: number, message: M): Promise<TabMessageResponse[M['event']]> {
+    return await browser.tabs.sendMessage(tabId, message) as TabMessageResponse[M['event']];
   }
 
   static async getAllTabs(): Promise<BrowserTab[]> {
     return await browser.tabs.query({});
   }
 
-  static goToTab(tabId: number): void {
-    browser.tabs.update(tabId, { highlighted: true });
+  static async goToTab(tab: BrowserTab): Promise<void> {
+    assertExists(tab.id, 'tab id must be defined to switch to it');
+    await browser.tabs.update(tab.id, { active: true });
+
+    if (tab.windowId !== undefined) {
+      await browser.windows.update(tab.windowId, { focused: true });
+    }
   }
 }

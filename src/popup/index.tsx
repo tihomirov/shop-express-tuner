@@ -3,16 +3,22 @@ import { createRoot } from "react-dom/client";
 import browser from 'webextension-polyfill';
 import { Order } from "../types/order";
 import { TabMessageEvent } from '../common/tab-message';
-import { TabsService } from '../services/tabs-service'
+import { BrowserTab, TabsService } from '../services/tabs-service'
 import { OrderForm } from './components/order-form'
 import { MessageForm } from './components/message-form'
 import { Settings, SettingsService } from '../services/settings-service'
 
+// Pages like chrome:// or tabs opened before the extension was installed have no content script
+const NO_CONTENT_SCRIPT_HINT = 'Reload the tab and try again.';
+
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
 const Popup = () => {
   const [order, setOrder] = useState<Order | undefined>();
   const [settings, setSettings] = useState<Settings | undefined>();
-  const [allTabs, setAllTabs] = useState<browser.Tabs.Tab[] | undefined>();
+  const [allTabs, setAllTabs] = useState<BrowserTab[] | undefined>();
   const [switchToTab, setSwitchToTab] = useState(true);
+  const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
     const fetchAllTabs = async () => {
@@ -21,10 +27,11 @@ const Popup = () => {
     }
 
     const parseOrder = async () => {
-      const order = await TabsService.sendMessageToCurrentTab<TabMessageEvent.ParseOrder>({
-        event: TabMessageEvent.ParseOrder,
-      });
-      setOrder(order);
+      try {
+        setOrder(await TabsService.sendMessageToCurrentTab({ event: TabMessageEvent.ParseOrder }));
+      } catch (e) {
+        setError(`No order found on this page: ${getErrorMessage(e)}`);
+      }
     }
 
     fetchAllTabs();
@@ -32,19 +39,21 @@ const Popup = () => {
     SettingsService.get().then(setSettings);
   }, [])
 
-
-
-  const openOrder = async (tab: browser.Tabs.Tab) => {
-    if (!order || !tab?.id) {
+  const openOrder = async (tab: BrowserTab) => {
+    if (!order || tab.id === undefined) {
       return;
     }
 
-    await TabsService.sendMessageToTab<TabMessageEvent.OpenOrderForm>(tab.id, {
-      event: TabMessageEvent.OpenOrderForm,
-      order
-    });
+    try {
+      await TabsService.sendMessageToTab(tab.id, { event: TabMessageEvent.OpenOrderForm, order });
+      setError(undefined);
+    } catch (e) {
+      setError(`Could not open the order in "${tab.title}". ${NO_CONTENT_SCRIPT_HINT}`);
+      return;
+    }
+
     if (switchToTab) {
-      TabsService.goToTab(tab.id);
+      await TabsService.goToTab(tab);
     }
   }
 
@@ -53,10 +62,11 @@ const Popup = () => {
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button title="Settings" onClick={() => browser.runtime.openOptionsPage()}>⚙️ Settings</button>
       </div>
+      {error && <p style={{ color: '#b00020' }}>{error}</p>}
       {order && <OrderForm order={order} />}
-      {allTabs && (<div style={{ display: 'flex', flexWrap: 'wrap' }}>
-        {allTabs.map((tab, index) => (
-          <div key={index} style={{
+      {order && allTabs && (<div style={{ display: 'flex', flexWrap: 'wrap' }}>
+        {allTabs.map(tab => (
+          <div key={tab.id} title={tab.title} style={{
             display: 'flex',
             height: '18px',
             width: '21%',
@@ -65,13 +75,13 @@ const Popup = () => {
             cursor: 'pointer',
             border: '1px grey solid'
           }} onClick={() => openOrder(tab)}>
-            <img src={tab.favIconUrl} />
+            {tab.favIconUrl && <img src={tab.favIconUrl} alt="" />}
             <span style={{ width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tab.title}</span>
           </div>
         ))}
         <div>
-          <input type="checkbox" name="switch-to-tab" checked={switchToTab} onChange={() => setSwitchToTab(!switchToTab)} />
-          <label>Switch to tab</label>
+          <input type="checkbox" id="switch-to-tab" checked={switchToTab} onChange={() => setSwitchToTab(!switchToTab)} />
+          <label htmlFor="switch-to-tab">Switch to tab</label>
         </div>
       </div>
       )}

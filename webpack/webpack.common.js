@@ -7,7 +7,6 @@ module.exports = {
     entry: {
         popup: path.join(srcDir, 'popup/index.tsx'),
         options: path.join(srcDir, 'options/index.tsx'),
-        background: path.join(srcDir, 'background.ts'),
         content_script: path.join(srcDir, 'content/index.tsx'),
     },
     output: {
@@ -17,9 +16,7 @@ module.exports = {
     optimization: {
         splitChunks: {
             name: "vendor",
-            chunks(chunk) {
-                return chunk.name !== 'background';
-            }
+            chunks: "all",
         },
     },
     module: {

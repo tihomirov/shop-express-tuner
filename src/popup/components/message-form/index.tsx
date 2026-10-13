@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from "react";
+import React, { FC, useCallback, useEffect, useState } from "react";
 import { Order } from "../../../types/order";
 import { renderMessageTemplate } from "../../../common/message-template";
 
@@ -9,25 +9,32 @@ type MessageFormProps = {
 
 export const MessageForm: FC<MessageFormProps> = ({ order, template }) => {
   const [message, setMessage] = useState(() => renderMessageTemplate(template, order));
+  const phone = order.delivery.phone ?? '';
+
+  useEffect(() => {
+    setMessage(renderMessageTemplate(template, order));
+  }, [template, order]);
+
   const onCopy = useCallback(async () => {
     await navigator.clipboard.writeText(message);
   }, [message]);
 
   const onCopyAndOpenTelegram = useCallback(async () => {
     await onCopy();
-    window.open(`https://t.me/${order.delivery.phone}?text=${encodeURIComponent(message)}&profile`);
-  }, [onCopy, message]);
+    window.open(`https://t.me/${phone}?text=${encodeURIComponent(message)}&profile`);
+  }, [onCopy, message, phone]);
 
   const onCopyAndOpenViber = useCallback(async () => {
     await onCopy();
-    window.open(`viber://chat?number=${order.delivery.phone}&text=${encodeURIComponent(message)}`);
-  }, [onCopy, message]);
+    // phone is "+380…"; in a query string an unencoded "+" turns into a space
+    window.open(`viber://chat?number=${encodeURIComponent(phone)}&text=${encodeURIComponent(message)}`);
+  }, [onCopy, message, phone]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <label htmlFor="myTextarea">Your Message:</label>
+      <label htmlFor="message">Your Message:</label>
       <textarea
-        id="myTextarea"
+        id="message"
         name="message"
         rows={4}
         value={message}

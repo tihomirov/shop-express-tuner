@@ -1,4 +1,5 @@
 import { Order } from '../types/order';
+import { isEnum, isNonArrayObject } from '../utils/is-it';
 
 export enum TabMessageEvent {
   ParseOrder = 'OLA_PARSE_ORDER',
@@ -18,5 +19,11 @@ export type TabMessage = ParseOrder | OpenOrderForm;
 
 export type TabMessageResponse = {
   [TabMessageEvent.ParseOrder]: Order;
-  [TabMessageEvent.OpenOrderForm]: undefined;
+  [TabMessageEvent.OpenOrderForm]: void;
 };
+
+const isTabMessageEvent = isEnum(TabMessageEvent);
+
+// Every extension message reaches every listener, so only handle messages that are ours
+export const isTabMessage = (message: unknown): message is TabMessage =>
+  isNonArrayObject(message) && isTabMessageEvent(message.event);

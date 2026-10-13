@@ -1,0 +1,29 @@
+{
+  "id": "#07",
+  "client": {
+    "name": "Джон Сноу",
+    "phone": "+380123456789",
+    "email": "jonsnow@gmail.com"
+  },
+  "delivery": {
+    "type": "Самовивіз з «Нова Пошта»",
+    "address": "Україна, Хмельницький, Відділення №777",
+    "ttn": "Не вказаний",
+    "name": "Джон Сноу",
+    "email": "jonsnow@gmail.com",
+    "phone": "+380123456789",
+    "paymentMethod": "Накладений платіж (оплата при отриманні)",
+    "paymentStatus": "pending"
+  },
+  "items": [
+    {
+      "name": "Шовковиста нічна сорочка зі шнурівкою",
+      "params": "Розмір: XL, Колір: Чорний",
+      "quantity": 1,
+      "price": 1990,
+      "actualPrice": 1990,
+      "totalPrice": 1990
+    }
+  ],
+  "totalPrice": 1990
+}

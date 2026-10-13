@@ -3,27 +3,30 @@ import { Delivery } from '../../types/delivery';
 import { Item, } from '../../types/item';
 import { Order } from '../../types/order';
 
-export function parseOrder(): Order {
-  console.log('[ParseOrderEvent] Event Log');
-  const mainOrderFormElement = document.getElementsByTagName('form')[0];
+// Like innerText (whitespace collapsed), but also works in jsdom which has no innerText
+const getText = (element: Element | null | undefined): string =>
+  element?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+
+export function parseOrder(doc: Document = document): Order {
+  const mainOrderFormElement = doc.getElementsByTagName('form')[0];
 
   if (!mainOrderFormElement) {
     throw new Error('Conteiner element is not found. Can not parse order')
   }
 
-  const id = mainOrderFormElement.querySelector('h1')?.innerText?.split(' ')[1]!;
+  const id = getText(mainOrderFormElement.querySelector('h1')).split(' ')[1]!;
 
   const getClient = (): Client => {
-    const clientContainerElement = [...mainOrderFormElement.querySelectorAll('p')].filter(p => p?.innerText === 'Клієнт')?.[0]?.parentElement;
-    const [_label, name, phone, email] = [...clientContainerElement?.querySelectorAll<HTMLParagraphElement>('div p') ?? []].map(p => p?.innerText)
+    const clientContainerElement = [...mainOrderFormElement.querySelectorAll('p')].filter(p => getText(p) === 'Клієнт')?.[0]?.parentElement;
+    const [_label, name, phone, email] = [...clientContainerElement?.querySelectorAll<HTMLParagraphElement>('div p') ?? []].map(p => getText(p))
     return { name, phone, email };
   }
 
   const getDelivery = (): Delivery => {
-    const deliveryContainerElement = [...mainOrderFormElement.querySelectorAll('p')].filter(p => p?.innerText === 'Доставка')?.[0]?.parentElement;
-    const delivery = ([...deliveryContainerElement?.querySelectorAll('p') ?? []]).map(p => p?.innerText);
-    const paymentContainerElement = [...mainOrderFormElement.querySelectorAll('p')].filter(p => p?.innerText === 'Спосіб оплати')?.[0]?.parentElement;
-    const payment = ([...paymentContainerElement?.querySelectorAll<HTMLParagraphElement | HTMLSpanElement>('p, span') ?? []]).map(p => p?.innerText);
+    const deliveryContainerElement = [...mainOrderFormElement.querySelectorAll('p')].filter(p => getText(p) === 'Доставка')?.[0]?.parentElement;
+    const delivery = ([...deliveryContainerElement?.querySelectorAll('p') ?? []]).map(p => getText(p));
+    const paymentContainerElement = [...mainOrderFormElement.querySelectorAll('p')].filter(p => getText(p) === 'Спосіб оплати')?.[0]?.parentElement;
+    const payment = ([...paymentContainerElement?.querySelectorAll<HTMLParagraphElement | HTMLSpanElement>('p, span') ?? []]).map(p => getText(p));
 
     return {
       type: delivery[1],
@@ -60,7 +63,7 @@ export function parseOrder(): Order {
   const getTotalPrice = (): number => {
     const regex = /^Всього:\d+,\d{2}₴$/;
 
-    const element = [...document.querySelectorAll("*")].find(el => {
+    const element = [...doc.querySelectorAll("*")].find(el => {
       const normalizedText = el.textContent
         .replace(/\s+/g, ""); // remove spaces + newlines
 

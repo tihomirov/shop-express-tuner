@@ -6,7 +6,7 @@ import { TabMessageEvent } from '../common/tab-message';
 import { BrowserTab, TabsService } from '../services/tabs-service'
 import { OrderForm } from './components/order-form'
 import { MessageForm } from './components/message-form'
-import { Settings, SettingsService } from '../services/settings-service'
+import { useSettings } from '../common/use-settings'
 
 // Pages like chrome:// or tabs opened before the extension was installed have no content script
 const NO_CONTENT_SCRIPT_HINT = 'Reload the tab and try again.';
@@ -15,7 +15,7 @@ const getErrorMessage = (error: unknown) => (error instanceof Error ? error.mess
 
 const Popup = () => {
   const [order, setOrder] = useState<Order | undefined>();
-  const [settings, setSettings] = useState<Settings | undefined>();
+  const settings = useSettings();
   const [allTabs, setAllTabs] = useState<BrowserTab[] | undefined>();
   const [switchToTab, setSwitchToTab] = useState(true);
   const [error, setError] = useState<string | undefined>();
@@ -36,7 +36,6 @@ const Popup = () => {
 
     fetchAllTabs();
     parseOrder();
-    SettingsService.get().then(setSettings);
   }, [])
 
   const openOrder = async (tab: BrowserTab) => {

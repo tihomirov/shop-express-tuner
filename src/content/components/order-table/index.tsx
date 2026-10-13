@@ -11,8 +11,11 @@ import {
   getItemShortName,
   getItemSize,
   getPaymentType,
+  getPaymentTypeLabel,
   getReceivedPayment,
+  OrderFormatSettings,
 } from "../../../common/order-format";
+import { useSettings } from "../../../common/use-settings";
 
 const tdCommonStyle: React.CSSProperties = {
   border: '1px solid rgb(0, 0, 0)',
@@ -42,13 +45,19 @@ type OrderTableProps = {
 const EMPTY_ITEM: Item = {};
 
 export const OrderTable: FC<OrderTableProps> = ({ order }) => {
+  const settings = useSettings();
+  return settings ? <OrderTableContent order={order} config={settings.orderFormat} /> : null;
+};
+
+const OrderTableContent: FC<OrderTableProps & { config: OrderFormatSettings }> = ({ order, config }) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
   const todayString = useMemo(() => formatDate(new Date()), []);
   const phoneFormatted = formatPhone(order.delivery.phone);
   const city = getCity(order.delivery.address);
-  const paymentType = getPaymentType(order.delivery.paymentMethod);
-  const receivedPayment = getReceivedPayment(order.totalPrice, paymentType);
+  const paymentTypeKey = getPaymentType(order.delivery.paymentMethod, config);
+  const paymentType = getPaymentTypeLabel(paymentTypeKey, config);
+  const receivedPayment = getReceivedPayment(order.totalPrice, paymentTypeKey, config);
 
   const copyTable = useCallback(async () => {
     try {
@@ -135,8 +144,8 @@ export const OrderTable: FC<OrderTableProps> = ({ order }) => {
                   </td>
                 </>
               )}
-              <td onClick={() => copyValue(getItemShortName(item.name))} style={tdCommonStyle}>
-                {getItemShortName(item.name)}
+              <td onClick={() => copyValue(getItemShortName(item.name, config))} style={tdCommonStyle}>
+                {getItemShortName(item.name, config)}
               </td>
               <td onClick={() => copyValue(getItemColor(item))} style={tdCommonStyle}>
                 {getItemColor(item)}

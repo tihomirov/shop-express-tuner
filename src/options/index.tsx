@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Settings, SettingsService } from "../services/settings-service";
+import { cleanSettings, Settings, SettingsService, validateSettings } from "../services/settings-service";
 import { MessageSettings } from "./components/message-settings";
+import { OrderFormatSettings } from "./components/order-format-settings";
 
 const Options = () => {
   const [settings, setSettings] = useState<Settings | undefined>();
@@ -11,16 +12,29 @@ const Options = () => {
     SettingsService.get().then(setSettings);
   }, []);
 
-  const showStatus = (text: string) => {
+  const showStatus = (text: string, durationMs = 1500) => {
     setStatus(text);
-    setTimeout(() => setStatus(""), 1500);
+    setTimeout(() => setStatus(""), durationMs);
   };
 
   const saveSettings = async () => {
     if (!settings) {
       return;
     }
-    await SettingsService.save(settings);
+    const error = validateSettings(settings);
+    if (error) {
+      showStatus(error, 5000);
+      return;
+    }
+    const cleaned = cleanSettings(settings);
+    try {
+      await SettingsService.save(cleaned);
+    } catch (e) {
+      // e.g. storage.sync quota exceeded by a very long list of rules
+      showStatus(`Could not save settings: ${e instanceof Error ? e.message : String(e)}`, 5000);
+      return;
+    }
+    setSettings(cleaned);
     showStatus("Settings saved.");
   };
 
@@ -43,6 +57,11 @@ const Options = () => {
       <MessageSettings
         value={settings.message}
         onChange={message => setSettings({ ...settings, message })}
+      />
+
+      <OrderFormatSettings
+        value={settings.orderFormat}
+        onChange={orderFormat => setSettings({ ...settings, orderFormat })}
       />
 
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

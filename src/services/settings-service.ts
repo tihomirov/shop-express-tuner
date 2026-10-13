@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill';
+import { isNonArrayObject, isString } from '../utils/is-it';
 
 export type MessageSettings = Readonly<{
   template: string;
@@ -20,11 +21,14 @@ const STORAGE_KEY = 'settings';
 export class SettingsService {
   static async get(): Promise<Settings> {
     const stored = await browser.storage.sync.get(STORAGE_KEY);
-    const settings = (stored[STORAGE_KEY] ?? {}) as Partial<Settings>;
+    const settings = stored[STORAGE_KEY];
+    const message = isNonArrayObject(settings) && isNonArrayObject(settings.message) ? settings.message : {};
 
-    // Merge per section so newly added settings get their defaults
+    // Use defaults for anything missing or malformed, e.g. settings added in a newer version
     return {
-      message: { ...DEFAULT_SETTINGS.message, ...settings.message },
+      message: {
+        template: isString(message.template) ? message.template : DEFAULT_SETTINGS.message.template,
+      },
     };
   }
 

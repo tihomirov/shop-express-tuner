@@ -1,62 +1,70 @@
 import browser from 'webextension-polyfill';
-import React, { FC, useCallback, useEffect, useState, useRef } from "react";
+import React, { FC, useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { TabMessageEvent } from '../common/tab-message';
+import { isTabMessage, TabMessageEvent } from '../common/tab-message';
 import { Order } from '../types/order';
+import { assertUnreachable } from '../utils/assert';
 import { parseOrder } from './events';
 import { OrderItem } from './components/order-item';
 
+type OrderWindow = Readonly<{
+  windowId: number;
+  order: Order;
+}>;
+
+let nextWindowId = 0;
+
 const App: FC = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [windows, setWindows] = useState<OrderWindow[]>([]);
 
   useEffect(() => {
-    const onTabMessage: browser.Runtime.OnMessageListener = (message: any, _sender, sendResponse) => {
-      const event = message.event;
-
-      switch (event) {
-        case TabMessageEvent.ParseOrder:
-          sendResponse(parseOrder())
-          return true;
-        case TabMessageEvent.OpenOrderForm:
-          setOrders(orders => [
-            ...orders,
-            message.order as Order,
-          ])
-          sendResponse(undefined);
-          return true;
-        default:
-          return true;;
+    // Returning a promise sends its result (or error) back to the popup; returning nothing ignores the message
+    const onTabMessage = (message: unknown): Promise<unknown> | undefined => {
+      if (!isTabMessage(message)) {
+        return;
       }
-    }
+
+      switch (message.event) {
+        case TabMessageEvent.ParseOrder:
+          return new Promise(resolve => resolve(parseOrder()));
+        case TabMessageEvent.OpenOrderForm: {
+          const orderWindow = { windowId: nextWindowId++, order: message.order };
+          setWindows(windows => [...windows, orderWindow]);
+          return Promise.resolve();
+        }
+        default:
+          return assertUnreachable(message);
+      }
+    };
 
     browser.runtime.onMessage.addListener(onTabMessage);
 
     return () => browser.runtime.onMessage.removeListener(onTabMessage);
   }, []);
 
-  const closeOrder = useCallback((orderId: string) => {
-    setOrders(orders => orders.filter(order => order.id !== orderId))
+  const closeWindow = useCallback((windowId: number) => {
+    setWindows(windows => windows.filter(orderWindow => orderWindow.windowId !== windowId));
   }, []);
 
   return (
     <>
-      {orders.map((order, index) =>
-        <OrderItem key={index} order={order} index={index} onClose={() => closeOrder(order.id)} />
+      {windows.map(({ windowId, order }, index) =>
+        <OrderItem key={windowId} order={order} index={index} onClose={() => closeWindow(windowId)} />
       )}
     </>
   );
 };
 
+const hostEl = document.createElement('div');
+hostEl.id = 'ola-root';
+document.body.appendChild(hostEl);
+
+// Shadow DOM keeps the host page CSS away from the order windows
+const shadowRoot = hostEl.attachShadow({ mode: 'open' });
 const rootEl = document.createElement('div');
+shadowRoot.appendChild(rootEl);
 
-rootEl.id = 'ola-root';
-rootEl.style.position = 'absolut';
-
-document.body.appendChild(rootEl);
-
-const root = createRoot(rootEl);
-
-root.render(
+createRoot(rootEl).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>

@@ -28,6 +28,6 @@ test("replaces repeated placeholders and keeps unknown ones", () => {
 });
 
 test("renders missing values as empty string", () => {
-  const noTtn = { ...order, delivery: { ...order.delivery, ttn: undefined as unknown as string } };
+  const noTtn = { ...order, delivery: { ...order.delivery, ttn: undefined } };
   expect(renderMessageTemplate('ТТН {ttn}!', noTtn)).toBe('ТТН !');
 });

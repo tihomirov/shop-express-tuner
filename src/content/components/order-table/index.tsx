@@ -1,6 +1,18 @@
 import React, { FC, useCallback, useRef, useMemo } from "react";
 import { Order } from "../../../types/order";
 import { Item } from "../../../types/item";
+import {
+  expandItemsByQuantity,
+  formatDate,
+  formatPhone,
+  getCity,
+  getItemColor,
+  getItemDiscount,
+  getItemShortName,
+  getItemSize,
+  getPaymentType,
+  getReceivedPayment,
+} from "../../../common/order-format";
 
 const tdCommonStyle: React.CSSProperties = {
   border: '1px solid rgb(0, 0, 0)',
@@ -22,90 +34,21 @@ const tableStyle: React.CSSProperties = {
   border: 'none'
 };
 
-const paymentTypeMap = {
-  'Накладений платіж': 'Накладений',
-  'Оплата картами': 'Сайт',
-}
-
-const itemNameMap = (name: string) => {
-  if (name === 'Шовковиста нічна сорочка зі шнурівкою') {
-    return 'ПСЧ';
-  }
-
-  if (name === 'Довга сукня з мереживними вставками') {
-    return 'СукМаксі';
-  }
-
-  if (name === 'Комбінезон') {
-    return 'Комбінезон';
-  }
-
-  if (name.startsWith('Лонгслів')) {
-    return 'Лонгслів'
-  }
-
-  return '';
-}
-
 type OrderTableProps = {
   order: Order,
 }
 
+// An order without parsed items still gets one row with the client and delivery data
+const EMPTY_ITEM: Item = {};
+
 export const OrderTable: FC<OrderTableProps> = ({ order }) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
-  const todayString = useMemo(() => {
-    const date = new Date(); // e.g., Sat Jan 10 2026
-
-    const year = date.getFullYear();
-    // getMonth() is zero-indexed, so add 1 and use padStart for 2 digits
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${day}.${month}.${year}`;
-  }, []);
-
-  const phoneFormatted = useMemo(() => {
-    return order.delivery.phone?.replace(/^\+38/, "").replace(/^38/, "");
-  }, [order]);
-
-  const paymentTypeString = useMemo(() => {
-    for (const [key, value] of Object.entries(paymentTypeMap)) {
-      if (order.delivery.paymentMethod?.includes(key)) {
-        return value;
-      }
-    }
-  }, [order.delivery.paymentMethod]);
-
-  const getColorString = useCallback((item: Item) => {
-    return item.params?.split(',')[1]?.split(':').map(v => v.trim())[1];
-  }, []);
-
-  const getSizeString = useCallback((item: Item) => {
-    return item.params?.split(',')[0].split(':').map(v => v.trim())[1]?.toLowerCase();
-  }, []);
-
-  const getItemNameString = useCallback((item: Item) => {
-    return item.name ? itemNameMap(item.name) : '';
-  }, []);
-
-  const getDiscountString = useCallback((item: Item) => {
-    if (item?.actualPrice && item.price && item.actualPrice !== item.price) {
-      return `${100 - Math.round((item.actualPrice / item.price) * 100)}%`
-    }
-
-    return ''
-  }, []);
-
-  const receivePayment = useMemo(() => {
-    if (paymentTypeString === paymentTypeMap['Оплата картами']) {
-      const sumWithCommision = order.totalPrice - (order.totalPrice * 0.013);
-
-      return Number.isInteger(sumWithCommision) ? sumWithCommision : sumWithCommision.toFixed(2)
-    } else {
-      return '';
-    }
-  }, [order]);
+  const todayString = useMemo(() => formatDate(new Date()), []);
+  const phoneFormatted = formatPhone(order.delivery.phone);
+  const city = getCity(order.delivery.address);
+  const paymentType = getPaymentType(order.delivery.paymentMethod);
+  const receivedPayment = getReceivedPayment(order.totalPrice, paymentType);
 
   const copyTable = useCallback(async () => {
     try {
@@ -113,21 +56,13 @@ export const OrderTable: FC<OrderTableProps> = ({ order }) => {
         throw new Error(`Table element is missing`);
       }
 
-      const htmlString = tableRef.current.outerHTML;
-
-      // 2. Create a Blob with 'text/html' MIME type
-      const blob = new Blob([htmlString], { type: 'text/html' });
-
-      // 3. Create a ClipboardItem (using Promise.resolve for broader compatibility)
+      // Copy both HTML (keeps the cells when pasting into a spreadsheet) and plain text
       const clipboardItem = new ClipboardItem({
-        'text/html': Promise.resolve(blob),
-        'text/plain': Promise.resolve(new Blob([tableRef.current.innerText], { type: 'text/plain' })) // Also include plain text
+        'text/html': new Blob([tableRef.current.outerHTML], { type: 'text/html' }),
+        'text/plain': new Blob([tableRef.current.innerText], { type: 'text/plain' }),
       });
 
-      // 4. Write to the clipboard
       await navigator.clipboard.write([clipboardItem]);
-      console.log('Table copied to clipboard successfully!');
-
     } catch (err) {
       console.error('Failed to copy table: ', err);
     }
@@ -141,7 +76,8 @@ export const OrderTable: FC<OrderTableProps> = ({ order }) => {
   }, []);
 
   const items = useMemo(() => {
-    return order.items.reduce((acc, item) => acc.concat(Array(item.quantity).fill(item)), [] as Item[])
+    const expanded = expandItemsByQuantity(order.items);
+    return expanded.length ? expanded : [EMPTY_ITEM];
   }, [order.items]);
 
   const itemsLength = items.length;
@@ -164,8 +100,8 @@ export const OrderTable: FC<OrderTableProps> = ({ order }) => {
                   <td rowSpan={itemsLength} onClick={() => copyValue(todayString)} style={tdCommonStyle}>
                     {todayString}
                   </td>
-                  <td rowSpan={itemsLength} onClick={() => copyValue(paymentTypeString)} style={tdCommonStyle}>
-                    {paymentTypeString}
+                  <td rowSpan={itemsLength} onClick={() => copyValue(paymentType)} style={tdCommonStyle}>
+                    {paymentType}
                   </td>
                   <td rowSpan={itemsLength} onClick={() => copyValue('Сайт')} style={tdCommonStyle}>
                     Сайт
@@ -176,12 +112,12 @@ export const OrderTable: FC<OrderTableProps> = ({ order }) => {
                 {item.actualPrice}
               </td>
 
-              {index === 0 && (<td rowSpan={itemsLength} onClick={() => copyValue(item.actualPrice)} style={tdCommonStyle}>
-                {receivePayment}
+              {index === 0 && (<td rowSpan={itemsLength} onClick={() => copyValue(receivedPayment)} style={tdCommonStyle}>
+                {receivedPayment}
               </td>)}
 
-              <td onClick={() => copyValue(getDiscountString(item))} style={tdCommonStyle}>
-                {getDiscountString(item)}
+              <td onClick={() => copyValue(getItemDiscount(item))} style={tdCommonStyle}>
+                {getItemDiscount(item)}
               </td>
 
               {index === 0 && (
@@ -194,19 +130,19 @@ export const OrderTable: FC<OrderTableProps> = ({ order }) => {
                   <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.email)} style={tdCommonStyle}>
                     {order.delivery.email}
                   </td>
-                  <td rowSpan={itemsLength} onClick={() => copyValue(order.delivery.address?.split(',')[1])} style={tdCommonStyle}>
-                    {order.delivery.address?.split(',')[1]}
+                  <td rowSpan={itemsLength} onClick={() => copyValue(city)} style={tdCommonStyle}>
+                    {city}
                   </td>
                 </>
               )}
-              <td onClick={() => copyValue(getItemNameString(item))} style={tdCommonStyle}>
-                {getItemNameString(item)}
+              <td onClick={() => copyValue(getItemShortName(item.name))} style={tdCommonStyle}>
+                {getItemShortName(item.name)}
               </td>
-              <td onClick={() => copyValue(getColorString(item))} style={tdCommonStyle}>
-                {getColorString(item)}
+              <td onClick={() => copyValue(getItemColor(item))} style={tdCommonStyle}>
+                {getItemColor(item)}
               </td>
-              <td onClick={() => copyValue(getSizeString(item))} style={tdCommonStyle}>
-                {getSizeString(item)}
+              <td onClick={() => copyValue(getItemSize(item))} style={tdCommonStyle}>
+                {getItemSize(item)}
               </td>
 
               {index === 0 && (
@@ -217,7 +153,7 @@ export const OrderTable: FC<OrderTableProps> = ({ order }) => {
             </tr>
           ))}
         </tbody>
-      </table >
+      </table>
     </>
   );
 };

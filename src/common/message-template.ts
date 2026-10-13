@@ -1,4 +1,5 @@
 import { Order } from '../types/order';
+import { getCity } from './order-format';
 
 type Placeholder = Readonly<{
   key: string;
@@ -17,7 +18,7 @@ export const MESSAGE_PLACEHOLDERS: ReadonlyArray<Placeholder> = [
   { key: 'orderId', description: 'Order number', getValue: (order) => order.id },
   { key: 'total', description: 'Order total price', getValue: (order) => order.totalPrice },
   { key: 'phone', description: 'Recipient phone', getValue: (order) => order.delivery.phone },
-  { key: 'city', description: 'Delivery city', getValue: (order) => order.delivery.address?.split(',')[1]?.trim() },
+  { key: 'city', description: 'Delivery city', getValue: (order) => getCity(order.delivery.address) },
 ];
 
 export function renderMessageTemplate(template: string, order: Order): string {

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "OLa",
-  "description": "Chrome Extension for Shop Express tools",
+  "description": "Reads data from web pages and turns it into tables, messages and actions",
   "version": "1.0.7",
   "options_ui": {
     "page": "options.html",

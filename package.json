@@ -1,6 +1,6 @@
 {
   "name": "ola-shop-express-tuner",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "OLa: Chrome extension with tools for Shop Express orders",
   "scripts": {
     "watch": "webpack --config webpack/webpack.dev.js --watch",

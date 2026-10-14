@@ -1,25 +1,38 @@
-import { Order } from '../types/order';
+import { TableModel } from '../recipe/outputs';
+import { ExtractResult, Recipe } from '../recipe/types';
 import { isEnum, isNonArrayObject } from '../utils/is-it';
 
 export enum TabMessageEvent {
-  ParseOrder = 'OLA_PARSE_ORDER',
-  OpenOrderForm = 'OLA_OPEN_ORDER_FORM_EVENT',
+  ExtractRecipe = 'OLA_EXTRACT_RECIPE',
+  PinTable = 'OLA_PIN_TABLE',
+  StartPicker = 'OLA_START_PICKER',
 }
 
-export type ParseOrder = Readonly<{
-  event: TabMessageEvent.ParseOrder;
+// Reads the page with a recipe
+export type ExtractRecipe = Readonly<{
+  event: TabMessageEvent.ExtractRecipe;
+  recipe: Recipe;
 }>;
 
-export type OpenOrderForm = Readonly<{
-  event: TabMessageEvent.OpenOrderForm;
-  order: Order;
+// Shows a table in a floating window on the page
+export type PinTable = Readonly<{
+  event: TabMessageEvent.PinTable;
+  title: string;
+  table: TableModel;
 }>;
 
-export type TabMessage = ParseOrder | OpenOrderForm;
+// Starts the interactive field picker for a recipe stored in the extension
+export type StartPicker = Readonly<{
+  event: TabMessageEvent.StartPicker;
+  recipeId: string;
+}>;
+
+export type TabMessage = ExtractRecipe | PinTable | StartPicker;
 
 export type TabMessageResponse = {
-  [TabMessageEvent.ParseOrder]: Order;
-  [TabMessageEvent.OpenOrderForm]: void;
+  [TabMessageEvent.ExtractRecipe]: ExtractResult;
+  [TabMessageEvent.PinTable]: void;
+  [TabMessageEvent.StartPicker]: void;
 };
 
 const isTabMessageEvent = isEnum(TabMessageEvent);

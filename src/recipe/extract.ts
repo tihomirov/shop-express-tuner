@@ -73,3 +73,23 @@ export function extractRecipe(recipe: Recipe, root: Root, now: Date = new Date()
 
   return { values, collections, missing };
 }
+
+// Re-evaluates the constants and computed fields of a recipe over values read earlier, so an edited
+// recipe can be previewed without the page
+export function recomputeResult(recipe: Recipe, previous: ExtractResult, now: Date = new Date()): ExtractResult {
+  const env: FilterEnv = { tables: recipe.tables };
+  const values: Record<string, string> = { ...previous.values, today: formatDate(now), ...recipe.constants };
+  addComputed(recipe.computed, values, env);
+
+  const collections: Record<string, Values[]> = {};
+  for (const collection of recipe.collections) {
+    const ownKeys = [...collection.fields, ...collection.computed].map(({ key }) => key);
+    collections[collection.key] = (previous.collections[collection.key] ?? []).map(row => {
+      const rowValues: Record<string, string> = { ...values, ...row };
+      addComputed(collection.computed, rowValues, env);
+      return Object.fromEntries(ownKeys.map(key => [key, rowValues[key] ?? '']));
+    });
+  }
+
+  return { values, collections, missing: previous.missing };
+}

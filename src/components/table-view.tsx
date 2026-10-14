@@ -56,7 +56,7 @@ export const TableView: FC<TableViewProps> = ({ table }) => {
   }, []);
 
   return (
-    <>
+    <div>
       <button style={{ cursor: 'pointer', margin: '0 4px 4px 0' }} onClick={copyTable}>
         Copy
       </button>
@@ -74,6 +74,6 @@ export const TableView: FC<TableViewProps> = ({ table }) => {
           ))}
         </tbody>
       </table>
-    </>
+    </div>
   );
 };

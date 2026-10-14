@@ -48,6 +48,8 @@ const App: FC<{ host: HTMLElement }> = ({ host }) => {
     return () => browser.runtime.onMessage.removeListener(onTabMessage);
   }, []);
 
+  const closePicker = useCallback(() => setPickerRecipeId(undefined), []);
+
   const closeWindow = useCallback((windowId: number) => {
     setWindows(windows => windows.filter(pinned => pinned.windowId !== windowId));
   }, []);
@@ -57,7 +59,7 @@ const App: FC<{ host: HTMLElement }> = ({ host }) => {
       {windows.map(({ windowId, title, table }, index) =>
         <PinnedWindow key={windowId} title={title} table={table} index={index} onClose={() => closeWindow(windowId)} />
       )}
-      {pickerRecipeId && <Picker key={pickerRecipeId} recipeId={pickerRecipeId} host={host} onClose={() => setPickerRecipeId(undefined)} />}
+      {pickerRecipeId && <Picker key={pickerRecipeId} recipeId={pickerRecipeId} host={host} onClose={closePicker} />}
     </>
   );
 };

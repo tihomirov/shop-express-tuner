@@ -12,7 +12,7 @@ const MAX_ANCESTOR_DEPTH = 8;
 const STABLE_ATTRIBUTES = ['data-testid', 'data-test', 'data-qa', 'data-cy', 'name', 'aria-label', 'itemprop', 'role'];
 
 // Classes of frameworks and UI state, generated hashes and anything with numbers
-const UNSTABLE_CLASS = /^(ng-|is-|has-|js-)|^(active|open|opened|selected|disabled|hover|focus|focused|checked|show|hide|hidden|visible|collapsed|expanded|animate-.*)$|\d{2,}|^(css|sc|jsx|svelte|emotion)-|^_/i;
+const UNSTABLE_CLASS = /(^|-)(ng|is|has|js)-|^(active|open|opened|selected|disabled|hover|focus|focused|checked|show|hide|hidden|visible|collapsed|expanded|animate-.*)$|\d{2,}|^(css|sc|jsx|svelte|emotion)-|^_/i;
 const UNSTABLE_ID = /\d{2,}|^:|^[a-f0-9-]{16,}$/i;
 
 const escapeIdentifier = (value: string) => value.replace(/[^\w\u00A0-\uFFFF-]/g, '\\$&').replace(/^(\d)/, '\\3$1 ');
@@ -92,6 +92,10 @@ function cssCandidates(target: Element, root: Root): CssCandidate[] {
   const chain = ancestorsUpTo(target, root, MAX_ANCESTOR_DEPTH);
   for (let depth = 1; depth < chain.length; depth++) {
     const anchor = chain[depth];
+    // A close ancestor needs no distinctive part, e.g. "h1 span"
+    if (depth <= 3) {
+      parts.forEach(part => selectors.push(`${anchor.tagName.toLowerCase()} ${part.selector}`));
+    }
     const anchorPart = simpleParts(anchor).find(part => part.kind !== 'tag');
     if (!anchorPart) {
       continue;

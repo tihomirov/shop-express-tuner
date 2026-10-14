@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+// Listened on the window, the first stop of an event, so most page handlers do not see the click.
 // Events the page would react to; while picking, a click must select an element, not press a button
 const BLOCKED_EVENTS = ['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'dblclick', 'contextmenu', 'auxclick', 'submit'];
 
@@ -56,18 +57,18 @@ export function usePagePicker({ active, host, onPick, onCancel }: PagePickerOpti
       }
     };
 
-    document.addEventListener('mousemove', onMove, true);
-    document.addEventListener('click', onClick, true);
-    document.addEventListener('keydown', onKeyDown, true);
-    BLOCKED_EVENTS.forEach(type => document.addEventListener(type, block, true));
+    window.addEventListener('mousemove', onMove, true);
+    window.addEventListener('click', onClick, true);
+    window.addEventListener('keydown', onKeyDown, true);
+    BLOCKED_EVENTS.forEach(type => window.addEventListener(type, block, true));
     const previousCursor = document.documentElement.style.cursor;
     document.documentElement.style.cursor = 'crosshair';
 
     return () => {
-      document.removeEventListener('mousemove', onMove, true);
-      document.removeEventListener('click', onClick, true);
-      document.removeEventListener('keydown', onKeyDown, true);
-      BLOCKED_EVENTS.forEach(type => document.removeEventListener(type, block, true));
+      window.removeEventListener('mousemove', onMove, true);
+      window.removeEventListener('click', onClick, true);
+      window.removeEventListener('keydown', onKeyDown, true);
+      BLOCKED_EVENTS.forEach(type => window.removeEventListener(type, block, true));
       document.documentElement.style.cursor = previousCursor;
       setHovered(null);
     };

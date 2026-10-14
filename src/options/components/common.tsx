@@ -125,13 +125,16 @@ export function TemplateInput({ value, onChange, recipe, keys, multiline, placeh
       ) : (
         <input ref={ref} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} style={styles.mono} />
       )}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-        {known.map(key => (
-          <button key={key} type="button" style={{ fontSize: '11px', padding: '0 4px' }} onClick={() => insert(key)}>
-            {key}
-          </button>
-        ))}
-      </div>
+      <details>
+        <summary style={styles.muted}>Insert a field</summary>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+          {known.map(key => (
+            <button key={key} type="button" style={{ fontSize: '11px', padding: '0 4px' }} onClick={() => insert(key)}>
+              {key}
+            </button>
+          ))}
+        </div>
+      </details>
       {problems.map(problem => <div key={problem} style={styles.error}>{problem}</div>)}
     </div>
   );

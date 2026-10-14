@@ -1,50 +1,13 @@
 import browser from 'webextension-polyfill';
-import { createShopExpressRecipe, DEFAULT_LEGACY_SETTINGS, LegacySettings } from '../recipe/builtin-shop-express';
+import { createShopExpressRecipe } from '../recipe/builtin-shop-express';
+import { readLegacySettings } from '../recipe/legacy-settings';
 import { normalizeRecipes } from '../recipe/normalize';
 import { ExtractResult, Recipe } from '../recipe/types';
-import { isNonArrayObject, isNumber, isString } from '../utils/is-it';
+import { isNonArrayObject } from '../utils/is-it';
 
 const RECIPES_KEY = 'recipes';
 const LAST_RESULTS_KEY = 'lastResults';
 const LEGACY_SETTINGS_KEY = 'settings';
-
-// The settings of versions before recipes were kept in the sync storage; reuse them for the built-in recipe
-export function readLegacySettings(stored: unknown): LegacySettings {
-  const defaults = DEFAULT_LEGACY_SETTINGS;
-  if (!isNonArrayObject(stored)) {
-    return defaults;
-  }
-
-  const message = isNonArrayObject(stored.message) ? stored.message : {};
-  const format = isNonArrayObject(stored.orderFormat) ? stored.orderFormat : {};
-  const types = isNonArrayObject(format.paymentTypes) ? format.paymentTypes : {};
-
-  const rules = Array.isArray(format.paymentMethodRules)
-    ? format.paymentMethodRules.filter(
-        (rule): rule is LegacySettings['paymentMethodRules'][number] =>
-          isNonArrayObject(rule) && isString(rule.method) && (rule.type === 'card' || rule.type === 'cashOnDelivery'),
-      )
-    : defaults.paymentMethodRules;
-  const shortNames = Array.isArray(format.itemShortNames)
-    ? format.itemShortNames.filter(
-        (rule): rule is LegacySettings['itemShortNames'][number] =>
-          isNonArrayObject(rule) && isString(rule.name) && isString(rule.shortName) && isString(rule.match),
-      )
-    : defaults.itemShortNames;
-
-  return {
-    messageTemplate: isString(message.template) ? message.template : defaults.messageTemplate,
-    cardCommissionPercent: isNumber(format.cardCommissionPercent)
-      ? format.cardCommissionPercent
-      : defaults.cardCommissionPercent,
-    paymentTypes: {
-      cashOnDelivery: isString(types.cashOnDelivery) ? types.cashOnDelivery : defaults.paymentTypes.cashOnDelivery,
-      card: isString(types.card) ? types.card : defaults.paymentTypes.card,
-    },
-    paymentMethodRules: rules,
-    itemShortNames: shortNames,
-  };
-}
 
 export class RecipeService {
   // The first run creates the built-in recipe, keeping what the old options page had

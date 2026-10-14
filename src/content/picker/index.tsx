@@ -121,8 +121,8 @@ export const Picker: FC<PickerProps> = ({ recipeId, host, onClose }) => {
   const descent = useRef<Element[]>([]);
 
   useEffect(() => {
-    RecipeService.get(recipeId).then(setRecipe);
-  }, [recipeId]);
+    RecipeService.get(recipeId).then(loaded => (loaded ? setRecipe(loaded) : onClose()));
+  }, [recipeId, onClose]);
 
   const commit = useCallback((next: Recipe) => {
     setRecipe(next);
@@ -262,7 +262,13 @@ export const Picker: FC<PickerProps> = ({ recipeId, host, onClose }) => {
       {view.type === 'field' && <Highlight element={view.draft.element} color={COLORS.picked} />}
       {view.type === 'row' && <RowHighlights draft={view.draft} />}
 
-      <div style={{ ...ui.panel, ...panelSide }}>
+      {/* Keys typed in the panel must not trigger the page's own shortcuts */}
+      <div
+        style={{ ...ui.panel, ...panelSide }}
+        onKeyDown={event => event.stopPropagation()}
+        onKeyUp={event => event.stopPropagation()}
+        onKeyPress={event => event.stopPropagation()}
+      >
         <div style={{ ...ui.row, justifyContent: 'space-between' }}>
           <strong>🎯 {recipe.name}</strong>
           <span style={ui.row}>

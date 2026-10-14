@@ -40,13 +40,21 @@ const Options = () => {
   const saved = recipes?.find(({ id }) => id === selectedId);
   const dirty = !!draft && JSON.stringify(draft) !== JSON.stringify(saved);
 
+  // What the draft was last in sync with
+  const syncedJson = useRef<string | undefined>(undefined);
+
+  // The draft follows the stored recipe: another one is selected, or it was changed elsewhere
+  // (the field picker on a page) while the draft has no unsaved edits
   useEffect(() => {
-    setDraft(saved);
+    setDraft(current => (!current || current.id !== saved?.id || JSON.stringify(current) === syncedJson.current ? saved : current));
+    syncedJson.current = JSON.stringify(saved);
+  }, [saved]);
+
+  useEffect(() => {
     setLastResult(undefined);
     if (selectedId) {
       RecipeService.getLastResult(selectedId).then(setLastResult);
     }
-    // Only a different recipe resets the draft, not a re-save of the same one
   }, [selectedId]);
 
   const confirmDiscard = () => !dirty || confirm("Discard the unsaved changes?");

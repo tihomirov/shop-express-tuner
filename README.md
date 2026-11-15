@@ -87,3 +87,22 @@ format before committing. Then write the `.expected.json` from what the page sho
 Run the **Release** workflow on GitHub (Actions → Release → Run workflow) and pick the version bump.
 It runs the tests, bumps the version in `package.json` and `manifest.json`, tags the commit and attaches
 the zipped extension to a GitHub release.
+
+### Updating an installed extension
+
+To update a copy loaded with "Load unpacked", run one of these commands in its folder (the one with
+`manifest.json`). It downloads the zip of the latest release, replaces the folder's contents with it and
+prints the new version; it does nothing in a folder that is not the OLa extension. Then press the reload
+icon of OLa in `chrome://extensions`. Recipes are kept in Chrome's storage, so they stay.
+
+macOS / Linux:
+
+```bash
+grep -q '"name": "OLa"' manifest.json && Z="$(mktemp)" && curl -fsSL "$(curl -fsSL https://api.github.com/repos/tihomirov/shop-express-tuner/releases/latest | grep -o 'https://[^"]*/ola-v[^"]*\.zip')" -o "$Z" && find . -mindepth 1 -delete && unzip -q "$Z" && rm "$Z" && grep '"version"' manifest.json
+```
+
+Windows (PowerShell):
+
+```powershell
+if ((Get-Content manifest.json -Raw) -match '"name": "OLa"') { $r = Invoke-RestMethod https://api.github.com/repos/tihomirov/shop-express-tuner/releases/latest; $z = Join-Path $env:TEMP 'ola.zip'; Invoke-WebRequest ($r.assets | Where-Object name -like 'ola-v*.zip').browser_download_url -OutFile $z; Get-ChildItem -Force | Remove-Item -Recurse -Force; Expand-Archive $z -DestinationPath .; Remove-Item $z; "Updated to $($r.tag_name)" } else { 'Not the OLa extension folder' }
+```

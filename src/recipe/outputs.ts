@@ -1,6 +1,6 @@
 import { FilterEnv } from './filters';
 import { renderTemplate } from './template';
-import { Action, ExtractResult, Recipe, TableOutput, Values } from './types';
+import { Action, ExtractResult, MessageOutput, Recipe, TableOutput, Values } from './types';
 
 export type TableCell = Readonly<{
   text: string;
@@ -16,6 +16,24 @@ export const envOf = (recipe: Recipe): FilterEnv => ({ tables: recipe.tables });
 
 export const renderText = (template: string, values: Values, recipe: Recipe): string =>
   renderTemplate(template, values, envOf(recipe)).text;
+
+const HTML_ESCAPES: Readonly<Record<string, string>> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+export const escapeHtml = (text: string): string => text.replace(/[&<>"']/g, char => HTML_ESCAPES[char]);
+
+// The message text; for "html" messages it is HTML with escaped values and <br> for new lines
+export function renderMessage(output: MessageOutput, values: Values, recipe: Recipe): string {
+  if (output.format !== 'html') {
+    return renderText(output.template, values, recipe);
+  }
+  return renderTemplate(output.template, values, envOf(recipe), escapeHtml).text.replace(/\r?\n/g, '<br>');
+}
+
+// A message as plain text and, for formatted messages, as HTML
+export type MessageContent = Readonly<{
+  text: string;
+  html?: string;
+}>;
 
 // Rows of the table: a collection row can be repeated, e.g. an item with quantity 2 takes two rows.
 // Without rows the table gets one row with the record values only.
@@ -60,18 +78,19 @@ export const isSafeUrl = (url: string): boolean => {
 };
 
 export type ActionPlan = Readonly<{
-  copy?: string;
+  copy?: MessageContent;
   open?: string;
 }>;
 
-// What an action does with the current values; `message` is the text of the message it belongs to
-export function planAction(action: Action, values: Values, recipe: Recipe, message?: string): ActionPlan {
-  const context = { ...values, message: message ?? '' };
-  const text = action.text !== undefined ? renderText(action.text, context, recipe) : message;
+// What an action does with the current values; `message` is the message it belongs to.
+// `{message}` in the action templates is the plain text of the message.
+export function planAction(action: Action, values: Values, recipe: Recipe, message?: MessageContent): ActionPlan {
+  const context = { ...values, message: message?.text ?? '' };
+  const copy = action.text !== undefined ? { text: renderText(action.text, context, recipe) } : message;
   const url = action.url ? renderText(action.url, context, recipe) : undefined;
 
   return {
-    copy: action.kind !== 'open' ? text : undefined,
+    copy: action.kind !== 'open' ? copy : undefined,
     open: action.kind !== 'copy' && url && isSafeUrl(url) ? url : undefined,
   };
 }

@@ -135,7 +135,13 @@ function normalizeOutput(value: PlainObject, index: number): Output | undefined 
         columns: asObjects(value.columns).map(normalizeColumn),
       };
     case 'message':
-      return { ...base, type: 'message', template: asString(value.template), actions };
+      return {
+        ...base,
+        type: 'message',
+        format: value.format === 'html' ? 'html' : undefined,
+        template: asString(value.template),
+        actions,
+      };
     case 'buttons':
       return { ...base, type: 'buttons', actions };
     default:

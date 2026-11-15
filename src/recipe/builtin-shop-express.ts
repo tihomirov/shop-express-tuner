@@ -28,6 +28,12 @@ export const DEFAULT_LEGACY_SETTINGS: LegacySettings = {
 
 export const SHOP_EXPRESS_RECIPE_ID = 'shop-express-order';
 
+const TRACKING_LINK = '<a href="https://novaposhta.ua/tracking/{ttn}">{ttn}</a>';
+
+// The message is formatted; the TTN of an older plain text message becomes a tracking link
+export const withTrackingLink = (template: string): string =>
+  template.includes('<a ') ? template : template.replace('{ttn}', TRACKING_LINK);
+
 const section = (text: string) => ({ text, selector: 'p' });
 const CLIENT = section('Клієнт');
 const DELIVERY = section('Доставка');
@@ -153,7 +159,8 @@ export function createShopExpressRecipe(settings: LegacySettings = DEFAULT_LEGAC
         id: 'message',
         type: 'message',
         title: 'Customer message',
-        template: settings.messageTemplate,
+        format: 'html',
+        template: withTrackingLink(settings.messageTemplate),
         actions: [
           action('copy', 'Copy', 'copy'),
           action('telegram', 'Copy & Open Telegram', 'copyAndOpen', 'https://t.me/{phone}?text={message|url}&profile'),

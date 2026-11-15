@@ -40,6 +40,16 @@ a number or the name of another field. Filters: `trim lower upper url prefix suf
 slice kv number round add sub subFrom mul div percentOff eq ne then lookup`.
 A field's *Transform* is the same list of filters without the field name: `split("₴", 0) | number`.
 
+### Formatted messages
+
+A message with the *Formatted (HTML)* format can use `<a href="…">`, `<b>`, `<i>`, `<u>`, `<s>` and `<code>`,
+e.g. `номер ТТН <a href="https://novaposhta.ua/tracking/{ttn}">{ttn}</a>`. Field values are inserted as
+text (escaped), new lines become line breaks, and only links with safe protocols are kept. The popup shows
+the formatted message, which can still be edited; copy buttons put it on the clipboard as HTML and as plain
+text, so apps that accept formatting (Telegram, mail) keep the links. `{message}` in a link to open, like
+the Telegram or Viber one, is the plain text. The built-in Shop Express message is formatted and links
+the TTN to Nova Poshta tracking.
+
 ## Development
 
 Requires Node 24 (see `.nvmrc`).

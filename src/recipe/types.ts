@@ -107,10 +107,15 @@ export type TableOutput = Readonly<{
   columns: ReadonlyArray<Column>;
 }>;
 
+export type MessageFormat = 'text' | 'html';
+
 export type MessageOutput = Readonly<{
   id: string;
   type: 'message';
   title: string;
+  // "html" templates can format the text, e.g. `<a href="https://novaposhta.ua/tracking/{ttn}">{ttn}</a>`;
+  // field values are escaped, new lines become line breaks. Plain text when not set.
+  format?: MessageFormat;
   template: string;
   actions: ReadonlyArray<Action>;
 }>;

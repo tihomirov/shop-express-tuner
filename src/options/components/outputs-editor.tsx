@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { ACTION_KINDS, Action, ActionKind, Column, Output, OUTPUT_TYPES, Recipe } from '../../recipe/types';
+import { ACTION_KINDS, Action, ActionKind, Column, MessageFormat, Output, OUTPUT_TYPES, Recipe } from '../../recipe/types';
 import { availableKeys, ListEditor, styles, TemplateInput } from './common';
 
 const newId = () => crypto.randomUUID().slice(0, 8);
@@ -162,6 +162,19 @@ export const OutputsEditor: FC<OutputsEditorProps> = ({ recipe, onChange }) => {
             {output.type === 'message' && (
               <>
                 <label style={styles.label}>
+                  Format
+                  <select
+                    value={output.format ?? 'text'}
+                    onChange={e => {
+                      const format = e.target.value as MessageFormat;
+                      update({ format: format === 'html' ? format : undefined } as Partial<Output>);
+                    }}
+                  >
+                    <option value="text">Plain text</option>
+                    <option value="html">Formatted (HTML): links, bold, italic</option>
+                  </select>
+                </label>
+                <label style={styles.label}>
                   Text
                   <TemplateInput
                     multiline
@@ -169,8 +182,20 @@ export const OutputsEditor: FC<OutputsEditorProps> = ({ recipe, onChange }) => {
                     onChange={template => update({ template } as Partial<Output>)}
                     recipe={recipe}
                     keys={availableKeys(recipe)}
+                    placeholder={
+                      output.format === 'html'
+                        ? 'ТТН <a href="https://novaposhta.ua/tracking/{ttn}">{ttn}</a>, <b>bold</b>'
+                        : undefined
+                    }
                   />
                 </label>
+                {output.format === 'html' && (
+                  <span style={styles.muted}>
+                    Tags: {'<a href="…">, <b>, <i>, <u>, <s>, <code>'}. Field values are inserted as text, new lines
+                    become line breaks. Copy puts the formatted text on the clipboard, so pasting it keeps the links
+                    where the app supports formatting; {'{message}'} in a link to open is the plain text.
+                  </span>
+                )}
                 <ActionsEditor
                   actions={output.actions}
                   recipe={recipe}

@@ -3,7 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { createShopExpressRecipe } from '../recipe/builtin-shop-express';
 import { extractRecipe } from '../recipe/extract';
-import { buildTable, planAction, renderText } from '../recipe/outputs';
+import { buildTable, planAction, renderMessage, renderText } from '../recipe/outputs';
+import { htmlToText, sanitizeHtml } from '../recipe/rich-text';
 import { MessageOutput, Recipe, TableOutput } from '../recipe/types';
 
 const FIXTURES_DIR = path.join(__dirname, 'fixtures', 'orders');
@@ -150,9 +151,24 @@ describe('outputs', () => {
   test('plans the Telegram action with the message text', () => {
     const message = recipe.outputs.find((output): output is MessageOutput => output.type === 'message')!;
     const telegram = message.actions[1];
-    const plan = planAction(telegram, result.values, recipe, 'Hi there');
+    const content = { text: 'Hi there', html: 'Hi <b>there</b>' };
+    const plan = planAction(telegram, result.values, recipe, content);
 
-    expect(plan).toEqual({ copy: 'Hi there', open: 'https://t.me/+380123456789?text=Hi%20there&profile' });
+    expect(plan).toEqual({ copy: content, open: 'https://t.me/+380123456789?text=Hi%20there&profile' });
+  });
+
+  test('renders the built-in message as HTML with a tracking link', () => {
+    const message = recipe.outputs.find((output): output is MessageOutput => output.type === 'message')!;
+    const html = renderMessage(message, { ...result.values, ttn: '20450000000001', firstName: 'Tom & <Jerry>' }, recipe);
+
+    expect(html).toContain('номер ТТН <a href="https://novaposhta.ua/tracking/20450000000001">20450000000001</a>💌<br><br>');
+    expect(html.startsWith('Tom &amp; &lt;Jerry&gt;,')).toBe(true);
+    expect(htmlToText(sanitizeHtml(html))).toContain('номер ТТН 20450000000001💌\n\nP/S');
+  });
+
+  test('an action with its own text copies plain text', () => {
+    const action = { id: 'x', label: 'x', kind: 'copy' as const, text: '{ttn}' };
+    expect(planAction(action, result.values, recipe, { text: 'm', html: 'm' }).copy).toEqual({ text: 'Не вказаний' });
   });
 
   test('refuses unsafe URLs', () => {

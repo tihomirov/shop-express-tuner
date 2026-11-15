@@ -239,14 +239,25 @@ function evaluate(
 
 const toError = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-export function renderTemplate(source: string, ctx: Values, env: FilterEnv): Evaluation {
+// `escape` is applied to the result of every `{expression}`, e.g. to put values into HTML
+export function renderTemplate(
+  source: string,
+  ctx: Values,
+  env: FilterEnv,
+  escape?: (value: string) => string,
+): Evaluation {
   const missing: string[] = [];
   const errors: string[] = [];
   let text = '';
 
   try {
     for (const segment of parseTemplate(source)) {
-      text += 'text' in segment ? segment.text : evaluate(segment.expression, '', ctx, env, missing, errors);
+      if ('text' in segment) {
+        text += segment.text;
+      } else {
+        const value = evaluate(segment.expression, '', ctx, env, missing, errors);
+        text += escape ? escape(value) : value;
+      }
     }
   } catch (e) {
     errors.push(toError(e));
